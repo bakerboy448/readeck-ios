@@ -7,6 +7,7 @@ struct ArticleReaderView: View {
     @Binding var useNativeWebView: Bool
     var bookmarkIds: [String] = []
     var onNavigateToNextBookmark: ((String) -> Void)? = nil
+    @AppStorage("autoAdvanceAfterArchive") private var autoAdvanceAfterArchive = true
 
     // MARK: - States
 
@@ -632,7 +633,7 @@ struct ArticleReaderView: View {
     }
 
     private func navigateAfterArchive() {
-        guard !bookmarkIds.isEmpty, let currentIndex = bookmarkIds.firstIndex(of: bookmarkId) else {
+        guard autoAdvanceAfterArchive, !bookmarkIds.isEmpty, let currentIndex = bookmarkIds.firstIndex(of: bookmarkId) else {
             return
         }
         let nextIndex = currentIndex + 1
