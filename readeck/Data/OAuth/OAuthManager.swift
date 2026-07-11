@@ -149,6 +149,7 @@ enum OAuthError: LocalizedError {
     case stateMismatch
     case invalidCallback
     case userCancelled
+    case flowAlreadyInProgress
 
     var errorDescription: String? {
         switch self {
@@ -158,6 +159,8 @@ enum OAuthError: LocalizedError {
             return "Invalid OAuth callback URL"
         case .userCancelled:
             return "OAuth authorization was cancelled by user"
+        case .flowAlreadyInProgress:
+            return "An OAuth login is already in progress"
         }
     }
 }
