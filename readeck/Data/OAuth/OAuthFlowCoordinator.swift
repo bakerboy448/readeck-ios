@@ -31,9 +31,22 @@ final class OAuthFlowCoordinator {
     func executeOAuthFlow(endpoint: String) async throws -> (OAuthToken, String) {
         logger.info("🔐 Starting OAuth flow for endpoint: \(endpoint)")
 
-        // Phase 1: Register client and generate PKCE
-        logger.info("Phase 1: Registering OAuth client...")
-        let (client, verifier, challenge, state) = try await manager.startOAuthFlow(endpoint: endpoint)
+        // Phase 1: Reuse a previously registered client for this endpoint, or register a new one
+        logger.info("Phase 1: Preparing OAuth client...")
+        let existingClientId: String?
+        if KeychainHelper.shared.loadEndpoint() == endpoint {
+            existingClientId = KeychainHelper.shared.loadOAuthClientId()
+        } else {
+            existingClientId = nil
+        }
+        let (client, verifier, challenge, state) = try await manager.startOAuthFlow(
+            endpoint: endpoint,
+            existingClientId: existingClientId
+        )
+
+        // Persist immediately so a retry before login completes also reuses this client
+        KeychainHelper.shared.saveOAuthClientId(client.clientId)
+        KeychainHelper.shared.saveEndpoint(endpoint)
 
         // Store state for later use
         self.currentClient = client

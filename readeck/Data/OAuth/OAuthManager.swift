@@ -47,11 +47,12 @@ final class OAuthManager {
         return components?.url
     }
 
-    /// Starts the OAuth flow by registering a client
+    /// Starts the OAuth flow by reusing a previously registered client, or registering a new one
     /// - Parameters:
     ///   - endpoint: Server endpoint URL
+    ///   - existingClientId: A previously registered client ID for this endpoint, if any
     /// - Returns: Tuple containing (client, PKCE verifier, PKCE challenge, state)
-    func startOAuthFlow(endpoint: String) async throws -> (client: OAuthClient, verifier: String, challenge: String, state: String) {
+    func startOAuthFlow(endpoint: String, existingClientId: String? = nil) async throws -> (client: OAuthClient, verifier: String, challenge: String, state: String) {
         logger.info("Starting OAuth flow for endpoint: \(endpoint)")
 
         // Generate PKCE
@@ -60,14 +61,24 @@ final class OAuthManager {
         // Generate CSRF state
         let state = UUID().uuidString
 
-        // Register OAuth client
-        let client = try await repository.registerClient(
-            endpoint: endpoint,
-            clientName: Self.clientName,
-            redirectUri: Self.redirectUri
-        )
-
-        logger.info("OAuth client registered with ID: \(client.clientId)")
+        let client: OAuthClient
+        if let existingClientId, !existingClientId.isEmpty {
+            logger.info("Reusing previously registered OAuth client: \(existingClientId)")
+            client = OAuthClient(
+                clientId: existingClientId,
+                clientSecret: nil,
+                clientName: Self.clientName,
+                redirectUris: [Self.redirectUri],
+                grantTypes: ["authorization_code"]
+            )
+        } else {
+            client = try await repository.registerClient(
+                endpoint: endpoint,
+                clientName: Self.clientName,
+                redirectUri: Self.redirectUri
+            )
+            logger.info("OAuth client registered with ID: \(client.clientId)")
+        }
 
         return (client, verifier, challenge, state)
     }
