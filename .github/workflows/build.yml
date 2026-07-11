@@ -20,4 +20,5 @@ jobs:
             -project readeck.xcodeproj \
             -scheme readeck \
             -destination 'generic/platform=iOS Simulator' \
+            -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO
