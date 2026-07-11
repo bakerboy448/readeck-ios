@@ -5,6 +5,8 @@ import SafariServices
 struct ArticleReaderView: View {
     let bookmarkId: String
     @Binding var useNativeWebView: Bool
+    var bookmarkIds: [String] = []
+    var onNavigateToNextBookmark: ((String) -> Void)? = nil
 
     // MARK: - States
 
@@ -30,9 +32,17 @@ struct ArticleReaderView: View {
 
     private let headerHeight: Double = 360
 
-    init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
+    init(
+        bookmarkId: String,
+        useNativeWebView: Binding<Bool>,
+        bookmarkIds: [String] = [],
+        onNavigateToNextBookmark: ((String) -> Void)? = nil,
+        viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()
+    ) {
         self.bookmarkId = bookmarkId
         self._useNativeWebView = useNativeWebView
+        self.bookmarkIds = bookmarkIds
+        self.onNavigateToNextBookmark = onNavigateToNextBookmark
         self.viewModel = viewModel
     }
 
@@ -153,7 +163,11 @@ struct ArticleReaderView: View {
 
                 Button(action: {
                     Task {
-                        await viewModel.archiveBookmark(id: bookmarkId, isArchive: !viewModel.bookmarkDetail.isArchived)
+                        let wasArchiving = !viewModel.bookmarkDetail.isArchived
+                        await viewModel.archiveBookmark(id: bookmarkId, isArchive: wasArchiving)
+                        if wasArchiving && viewModel.errorMessage == nil {
+                            navigateAfterArchive()
+                        }
                     }
                 }) {
                     Image(systemName: viewModel.bookmarkDetail.isArchived ? "checkmark.circle" : "archivebox")
@@ -615,6 +629,18 @@ struct ArticleReaderView: View {
             return displayFormatter.string(from: date)
         }
         return dateString
+    }
+
+    private func navigateAfterArchive() {
+        guard !bookmarkIds.isEmpty, let currentIndex = bookmarkIds.firstIndex(of: bookmarkId) else {
+            return
+        }
+        let nextIndex = currentIndex + 1
+        if nextIndex < bookmarkIds.count {
+            onNavigateToNextBookmark?(bookmarkIds[nextIndex])
+        } else {
+            dismiss()
+        }
     }
 }
 

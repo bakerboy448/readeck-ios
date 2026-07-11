@@ -61,8 +61,14 @@ struct BookmarksView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            ArticleReaderRouter(bookmarkId: bookmarkId)
-                .toolbar(.hidden, for: .tabBar)
+            ArticleReaderRouter(
+                bookmarkId: bookmarkId,
+                bookmarkIds: viewModel.bookmarks?.bookmarks.map(\.id) ?? [],
+                onNavigateToNextBookmark: { nextBookmarkId in
+                    selectedBookmarkId = nextBookmarkId
+                }
+            )
+            .toolbar(.hidden, for: .tabBar)
         }
         .sheet(item: $viewModel.showTagsBookmark) { bookmark in
             BookmarkLabelsView(bookmarkId: bookmark.id, initialLabels: bookmark.labels)
