@@ -7,6 +7,7 @@ struct ArticleReaderView: View {
     @Binding var useNativeWebView: Bool
     var bookmarkIds: [String] = []
     var onNavigateToNextBookmark: ((String) -> Void)? = nil
+    var onNoMoreBookmarks: (() -> Void)? = nil
     @AppStorage("autoAdvanceAfterArchive") private var autoAdvanceAfterArchive = true
 
     // MARK: - States
@@ -38,12 +39,14 @@ struct ArticleReaderView: View {
         useNativeWebView: Binding<Bool>,
         bookmarkIds: [String] = [],
         onNavigateToNextBookmark: ((String) -> Void)? = nil,
+        onNoMoreBookmarks: (() -> Void)? = nil,
         viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()
     ) {
         self.bookmarkId = bookmarkId
         self._useNativeWebView = useNativeWebView
         self.bookmarkIds = bookmarkIds
         self.onNavigateToNextBookmark = onNavigateToNextBookmark
+        self.onNoMoreBookmarks = onNoMoreBookmarks
         self.viewModel = viewModel
     }
 
@@ -640,6 +643,9 @@ struct ArticleReaderView: View {
         if nextIndex < bookmarkIds.count {
             onNavigateToNextBookmark?(bookmarkIds[nextIndex])
         } else {
+            // dismiss() alone is a no-op in a NavigationSplitView detail column (no nav
+            // stack to pop) — onNoMoreBookmarks lets the iPad caller clear its selection.
+            onNoMoreBookmarks?()
             dismiss()
         }
     }

@@ -132,6 +132,9 @@ struct PadSidebarView: View {
                         if let next = currentBookmarkList.first(where: { $0.id == nextBookmarkId }) {
                             selectedBookmark = next
                         }
+                    },
+                    onNoMoreBookmarks: {
+                        selectedBookmark = nil
                     }
                 )
                     .toolbar {
